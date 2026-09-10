@@ -1,0 +1,17 @@
+{
+  "name": "Universal Edge Signer",
+  "short_name": "Edge Signer",
+  "description": "Deploy your own Cloudflare Worker API gateway — bring your own account and API keys.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0d12",
+  "theme_color": "#4338ca",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
