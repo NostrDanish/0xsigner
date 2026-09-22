@@ -36,7 +36,7 @@ function publicStatus(env: WorkerEnv): Record<string, unknown> {
   }
   return {
     app: MANIFEST.app,
-    runtimeVersion: MANIFEST.version,
+    runtimeVersion: MANIFEST.runtimeVersion,
     routes: Object.keys(MANIFEST.routes),
     providers,
   };
@@ -60,7 +60,13 @@ export default {
       }
 
       // Built-in health endpoint — probes each provider's reachability.
+      // Each probe consumes real upstream quota (Brave/OpenAI), so rate-limit
+      // it like any other route to stop strangers burning the operator's plan.
       if (path === '/api/health' && request.method === 'GET') {
+        const healthRetry = rateLimit(request, MANIFEST.limits.default, '/api/health');
+        if (healthRetry > 0) {
+          return errorResponse('RATE_LIMITED', 'Too many requests', 429, request, allowed, requestId, healthRetry);
+        }
         const checks: HealthItem[] = [];
         for (const [id, cfg] of Object.entries(MANIFEST.providers)) {
           const c = cfg as Record<string, unknown>;

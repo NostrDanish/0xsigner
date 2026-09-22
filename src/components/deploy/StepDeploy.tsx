@@ -3,7 +3,7 @@ import { CheckCircle2, Copy, ExternalLink, Loader2, XCircle } from 'lucide-react
 import { Button } from '@/components/ui/button';
 import { StepHeader } from './common';
 import { useToast } from '@/hooks/useToast';
-import { buildWorkerSource, DEFAULT_COMPATIBILITY_DATE } from '@/lib/signer/runtime/generator';
+import { buildWorkerJs, DEFAULT_COMPATIBILITY_DATE } from '@/lib/signer/runtime/generator';
 import { deployWorker, checkDeployedHealth, type LiveHealth } from '@/lib/signer/cloudflare';
 import { useRequiredSecrets, type WizardState } from '@/lib/signer/useWizard';
 
@@ -48,7 +48,9 @@ export function StepDeploy({ wizard }: { wizard: WizardState }) {
 
     try {
       mark(0, 'active');
-      const source = buildWorkerSource(manifest);
+      // Transpile the generated TS runtime to plain JS — the Cloudflare
+      // upload API does not transpile TypeScript.
+      const source = await buildWorkerJs(manifest);
       const secretValues = Object.fromEntries(required.map((s) => [s.name, secrets[s.name] ?? '']));
 
       mark(0, 'ok');

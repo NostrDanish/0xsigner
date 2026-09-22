@@ -13,6 +13,8 @@
 
 import type { SignerManifest } from '../manifest';
 
+import * as esbuild from 'esbuild-wasm';
+
 import coreSource from './core.ts?raw';
 import providersSource from './providers.ts?raw';
 import entrySource from './entry.ts?raw';
@@ -85,3 +87,42 @@ export default __worker;
 
 /** Extract the compatibility_date we tag at the bottom (for reference). */
 export const DEFAULT_COMPATIBILITY_DATE = '2026-08-01';
+
+/* ------------------------------------------------------------------ */
+/* TS -> JS transpilation (REQUIRED before upload)                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The Cloudflare Workers upload API does NOT transpile TypeScript: whatever
+ * `buildWorkerSource` emits is what runs. The runtime sources are full TS
+ * (type annotations, interfaces, generics), so the generated module must be
+ * transpiled to plain JavaScript in the browser before `uploadWorker`.
+ */
+let esbuildInit: Promise<void> | null = null;
+
+function ensureEsbuild(): Promise<void> {
+  esbuildInit ??= esbuild.initialize({
+    // Pinned to the installed esbuild-wasm version (see package.json).
+    wasmURL: 'https://unpkg.com/esbuild-wasm@0.28.2/esbuild.wasm',
+    worker: false,
+  });
+  return esbuildInit;
+}
+
+/**
+ * Build the deployable Worker as plain JavaScript for a manifest.
+ * Always deploy the output of THIS function, never raw `buildWorkerSource`.
+ */
+export async function buildWorkerJs(
+  manifest: SignerManifest,
+  compatibilityDate = DEFAULT_COMPATIBILITY_DATE,
+): Promise<string> {
+  const ts = buildWorkerSource(manifest, compatibilityDate);
+  await ensureEsbuild();
+  const result = await esbuild.transform(ts, {
+    loader: 'ts',
+    target: 'es2022',
+    format: 'esm',
+  });
+  return result.code;
+}

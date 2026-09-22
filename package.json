@@ -19,6 +19,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "embla-carousel-react": "^8.6.0",
+    "esbuild-wasm": "0.28.2",
     "input-otp": "^1.4.2",
     "lucide-react": "^1.11.0",
     "nostr-tools": "^2.23.3",

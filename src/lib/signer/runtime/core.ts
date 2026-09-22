@@ -18,6 +18,7 @@
 
 export interface RuntimeManifest {
   version: '1';
+  runtimeVersion: string;
   app: string;
   security: {
     allowedOrigins: string[];

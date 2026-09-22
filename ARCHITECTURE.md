@@ -68,6 +68,13 @@ The `runtime/*` files are ordinary, type-checked TS modules, but written to be
 single self-contained Worker module, injecting the manifest as a literal. The
 Worker is uploaded module-syntax via `multipart/form-data` (`main_module`).
 
+**Transpilation is mandatory before upload.** The Workers upload API does not
+transpile TypeScript — whatever bytes you send are what runs. The concatenated
+module is valid TS but *invalid JS* (type annotations, interfaces), so the
+deploy step always calls `buildWorkerJs()` (esbuild-wasm `transform` in the
+browser), never raw `buildWorkerSource()`. `generator.test.ts` enforces this:
+raw output must fail a JS parse, transpiled output must pass.
+
 ---
 
 ## Provider adapters
