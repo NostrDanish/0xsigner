@@ -150,7 +150,11 @@ export function checkPublicAuth(
 ): boolean {
   const auth = manifest.security.publicAuth;
   if (auth.type === 'none') return true;
-  if (auth.type === 'nip98') return true; // structural NIP-98 check is per-route; presence-only here
+  // NIP-98 must never be treated as authenticated without validating the
+  // signed event (kind, pubkey, created_at, URL, method, payload and sig).
+  // The generated runtime currently has no verifier, so fail closed rather
+  // than allowing every request through when a manifest selects NIP-98.
+  if (auth.type === 'nip98') return false;
   const expected = env[auth.secretName];
   if (typeof expected !== 'string' || expected.length === 0) return false;
   const header = request.headers.get('Authorization') ?? '';
