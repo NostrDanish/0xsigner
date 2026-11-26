@@ -67,3 +67,34 @@ describe('buildWorkerJs', () => {
     }
   }, 30_000);
 });
+
+import { checkPublicAuth, type RuntimeManifest } from './core';
+
+describe('checkPublicAuth', () => {
+  const manifest = {
+    version: '1',
+    runtimeVersion: '1',
+    app: 'test',
+    security: {
+      allowedOrigins: [],
+      publicAuth: { type: 'nip98' },
+      internalMode: false,
+    },
+    limits: { default: { keyBy: 'ip', requestsPerMinute: 60 }, perRoute: {} },
+    privacy: { mode: 'standard' },
+    routes: {},
+    providers: {},
+  } as RuntimeManifest;
+
+  it('fails closed for NIP-98 until signature verification is implemented', () => {
+    const request = new Request('https://example.test/api/private');
+    expect(checkPublicAuth(request, manifest, {})).toBe(false);
+  });
+
+  it('does not accept a caller-supplied NIP-98 header as proof of authentication', () => {
+    const request = new Request('https://example.test/api/private', {
+      headers: { Authorization: 'Nostr eyJhbGciOiJFZERTQSJ9.fake.signature' },
+    });
+    expect(checkPublicAuth(request, manifest, {})).toBe(false);
+  });
+});
